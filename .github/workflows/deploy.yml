@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     # If you added a label to your EC2 runner (e.g., 'ec2'), use: runs-on: [self-hosted, ec2]
-    runs-on: self-hosted
+    runs-on: ubuntu
 
     steps:
       - name: Checkout code
