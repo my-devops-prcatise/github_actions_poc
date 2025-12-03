@@ -1,0 +1,43 @@
+
+name: Deploy HTML to EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted   # Or [self-hosted, ec2] if you added a label
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure Apache is installed and running
+        run: |
+          set -e
+          if ! command -v apache2 >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y apache2
+          fi
+          sudo systemctl enable apache2
+          sudo systemctl start apache2
+
+      - name: Deploy site
+        run: |
+          set -e
+          sudo rm -rf /var/www/html/*
+          sudo cp -r ./* /var/www/html/
+          sudo chown -R www-data:www-data /var/www/html
+          sudo find /var/www/html -type d -exec chmod 755 {} \;
+          sudo find /var/www/html -type f -exec chmod 644 {} \;
+          sudo systemctl reload apache2
+
+      - name: Validate deployment
+        run: |
+          if [ ! -f /var/www/html/index.html ]; then
+            echo "index.html not found in /var/www/html" >&2
+            exit 1
+          fi
+          echo "Deployment completed successfully."
